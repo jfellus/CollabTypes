@@ -1,14 +1,22 @@
 var Tree = require("./tree");
-var DBConnection = require("./connection");
+var Connection = require("./connection");
 
 class CollabTree {
 	/** The name of the CollabTree is the name of the corresponding SQL table */
 	constructor(name) {
+		super();
+		var _super = super;
 		this.name = name;
 		this.tree = new Tree();
-		this.db = DBConnection.connectTable(name);
-		this.idPrefix = this.db.createIdPrefix();  // A unique prefix is created for each CollabTree to avoid DB ID collisions.
+		this.db =
 		this.curId = 0;
+		Connection.connectTable(name).then((db) => {
+			that.db = db;
+				return Server.createIdPrefix();
+		}).then((idPrefix) => {
+			that.idPrefix = idPrefix;
+			_super.emit('ready');
+		});
 	}
 
 	/** @return a TreeNode (see ./tree.js) */
@@ -51,7 +59,8 @@ class CollabTree {
 	fetch() {
 		var nodes = this.tree.nodes;
 		var r = this.db.selectAll();
-		while(var x = r.fetchAssoc()) {
+		var x;
+		while(x = r.fetchAssoc()) {
 			if(!nodes[x.parent]) nodes[x.parent] = this.tree.create(x,this.tree.root);
 			if(!nodes[x.id]) nodes[x.id] = this.tree.create(x);
 			else nodes[x.id].reparent(x.parent);
@@ -89,11 +98,13 @@ class CollabTree {
 		node.detach();
 	}
 
-	_notify() {
-		// TODO send a message to all peers via server
+	_notify(cmd, x) {
+		Connection.send({type:'CollabTree', name:this.name, cmd:cmd, x:x});
 	}
 
 	_createId() {
 		return this.idPrefix + (this.curId++);
 	}
 }
+
+module.exports = CollabTree;

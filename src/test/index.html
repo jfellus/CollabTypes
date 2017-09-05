@@ -1,18 +1,12 @@
 <html>
 <head>
+	<script src="collab.min.js"></script>
 	<script>
 	var c = null;
-		function onMessage(x) {
+		function dbg(x) {
 				document.querySelector("#result").innerText += x.data + "\n";
 		}
 
-		function send(x) {
-			if(!c) {
-				c = new WebSocket("ws://"+ window.location.hostname + ":10000");
-				c.onmessage = onMessage;
-			}
-			c.send(x);
-		}
 		function action() {
 			send(document.querySelector("input").value);
 			event.preventDefault();
