@@ -1,5 +1,5 @@
 var ws = new WebSocket("ws://"+ window.location.hostname + ":10000");
-ws.onmessage = Server.onReceive;
+ws.onmessage = (msg) => { Server.onReceive(JSON.decode(msg)); };
 
 var msgId = 0;
 var callbacks = {};

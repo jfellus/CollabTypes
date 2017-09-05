@@ -1,21 +1,20 @@
 var Tree = require("./tree");
 var Connection = require("./connection");
+const EventEmitter = require('events');
 
-class CollabTree {
+class CollabTree extends EventEmitter {
 	/** The name of the CollabTree is the name of the corresponding SQL table */
 	constructor(name) {
 		super();
-		var _super = super;
 		this.name = name;
 		this.tree = new Tree();
-		this.db =
 		this.curId = 0;
 		Connection.connectTable(name).then((db) => {
-			that.db = db;
-				return Server.createIdPrefix();
+			this.db = db;
+			return Server.createIdPrefix();
 		}).then((idPrefix) => {
-			that.idPrefix = idPrefix;
-			_super.emit('ready');
+			this.idPrefix = idPrefix;
+			super.emit('ready');
 		});
 	}
 
@@ -32,18 +31,17 @@ class CollabTree {
 	create(props, parent) {
 		var db = this.db;
 		var name = this.name;
-		var that = this;
 		var node = this.tree.create(props, parent, this._createId());
 		db.insert(node);
 		this._notify('add', node);
 
-		node.on('reparent', function(r){
+		node.on('reparent', (r) => {
 			db.update({id:r.node.id},{parent:r.node.parent.id});
-			that._notify('reparent', {id:r.node.id,parent:r.node.parent.id});
+			this._notify('reparent', {id:r.node.id,parent:r.node.parent.id});
 		});
-		node.on('remove', function(node){
+		node.on('remove', (node) => {
 			db.remove({id:node.id});
-			that._notify('remove', node.id);
+			this._notify('remove', node.id);
 		});
 
 		return node;
